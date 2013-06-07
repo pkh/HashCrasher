@@ -7,4 +7,4 @@ A Python tool to recover a variety of hashes. As of 0.0.1 limited to numerical p
 
 To view usage instructions run from your terminal: 
 
-`$ python hashcrasher.py -h
+`$ python hashcrasher.py -h`
