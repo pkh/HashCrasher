@@ -19,4 +19,4 @@ To view usage instructions, run the following command from your terminal:
 `$ python hashcrasher.py -h`
 
 
-HashCrasher was created primarily to be an exercise in learning Python syntax and conventions. However, hopefully a useful tool also emerges.
+_HashCrasher was created primarily to be an exercise in learning Python syntax and conventions. However, hopefully a useful tool also emerges._
