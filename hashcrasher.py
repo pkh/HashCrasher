@@ -18,10 +18,16 @@
 import sys
 import getopt
 import hashlib
+import time
+from multiprocessing import Process, Queue
+
 
 VERSION_NUM = "0.0.1"
+NUM_PROCESSES = 4
 
 
+
+start_time = time.time()
 
 # -----------------------------
 # usage
@@ -71,7 +77,7 @@ def usage():
 # Attempts to decipher the given hash by repeatedly guessing
 # 
 # -----------------------------
-def start_cracking(inFile, outFile, hashType):
+def start_cracking(hashArray, hashType, q):
 
 	# Perform checks on input data
 	# check to make sure we've chosen a hash to use
@@ -80,22 +86,17 @@ def start_cracking(inFile, outFile, hashType):
 		usage()
 		return
 
-	# Check for output file
-	usingOutputFile = True
-	if outFile == '':
-		usingOutputFile = False
-	else: 
-		usingOutputFile = True
-
-	
-	# Start your engines and get rollin
-	fileObj = open(inFile, 'r')
+	# # Check for output file
+	# usingOutputFile = True
+	# if outFile == '':
+	# 	usingOutputFile = False
+	# else: 
+	# 	usingOutputFile = True
 
 	foundHashes = []
 
-	for line in fileObj:
-		line = line.rstrip()
-
+	# Start your engines and get rollin
+	for line in hashArray:
 		for x in range(999999):
 			hashed_num = str(x)
 			if hashType == '100':	# MD5
@@ -121,32 +122,80 @@ def start_cracking(inFile, outFile, hashType):
 				break
 
 
-	fileObj.close()
-
-	# depending on user's preference, either dump found hashes
-	# out to terminal window or write to the specified output file
-	if usingOutputFile == False: # print to the terminal window
-		if len(foundHashes) > 0:
-			print "Found:"
-			for fh in foundHashes:
-				print fh
-			print ""
-		else: 
-			print "No hashes found."
-
-	else:						# print to the specified output file
-		if len(foundHashes) > 0:
-			outf = open(outFile, 'w')
-			for fh in foundHashes:
-				outf.write(fh + "\n")
-			print "Wrote found hashes out to file: " + outf.name
-			print ""
-			outf.close()
-		else :
-			print "No hashes found."			
+	q.put(foundHashes)
 
 
-	
+
+
+	# # Start your engines and get rollin
+	# fileObj = open(inFile, 'r')
+
+	# foundHashes = []
+
+	# for line in fileObj:
+	# 	line = line.rstrip()
+
+	# 	for x in range(999999):
+	# 		hashed_num = str(x)
+	# 		if hashType == '100':	# MD5
+	# 			guess = hashlib.md5(hashed_num)
+	# 		elif hashType == '200': # SHA1
+	# 			guess = hashlib.sha1(hashed_num)
+	# 		elif hashType == '300': # SHA 224
+	# 			guess = hashlib.sha224(hashed_num)
+	# 		elif hashType == '400': # SHA 256
+	# 			guess = hashlib.sha256(hashed_num)
+	# 		elif hashType == '500': # SHA 384
+	# 			guess = hashlib.sha384(hashed_num)
+	# 		elif hashType == '600': # SHA 512
+	# 			guess = hashlib.sha512(hashed_num)
+	# 		else: 
+	# 			guess = ''
+
+
+
+	# 		if line in guess.hexdigest():
+	# 			foundString = guess.hexdigest() + ":" + str(x)
+	# 			foundHashes.append(foundString)
+	# 			break
+
+
+	# fileObj.close()
+
+	# # depending on user's preference, either dump found hashes
+	# # out to terminal window or write to the specified output file
+	# if usingOutputFile == False: # print to the terminal window
+	# 	if len(foundHashes) > 0:
+	# 		print "Found:"
+	# 		for fh in foundHashes:
+	# 			print fh
+	# 		print ""
+	# 	else: 
+	# 		print "No hashes found."
+
+	# else:						# print to the specified output file
+	# 	if len(foundHashes) > 0:
+	# 		outf = open(outFile, 'w')
+	# 		for fh in foundHashes:
+	# 			outf.write(fh + "\n")
+	# 		print "Wrote found hashes out to file: " + outf.name
+	# 		print ""
+	# 		outf.close()
+	# 	else :
+	# 		print "No hashes found."			
+
+
+# -----------------------------
+# file_len
+#
+# returns the number of lines 
+# in the file "fname"
+# -----------------------------	
+def file_len(fname):
+    with open(fname) as f:
+        for i, l in enumerate(f):
+            pass
+    return i + 1	
 
 	
 
@@ -189,8 +238,105 @@ def main(argv):
 	print ""
 
 	# start it up
-	start_cracking(inputfile, outputfile, hashType)
+	# start_cracking(inputfile, outputfile, hashType)
 
+	numberOfLines = file_len(inputfile)
+	linesPerProcess = (numberOfLines / NUM_PROCESSES)
+	remainder = (numberOfLines % NUM_PROCESSES)
+
+	proc1Lines = linesPerProcess + remainder
+	proc2Lines = linesPerProcess
+	proc3Lines = linesPerProcess
+	proc4Lines = linesPerProcess
+
+	hashes1 = []
+	hashes2 = []
+	hashes3 = []
+	hashes4 = []
+
+	q = Queue()
+
+	f = open(inputfile, 'r')
+	counter = 0
+
+	for line in f:
+		if counter < (linesPerProcess*1)+remainder:
+			line = line.rstrip()
+			hashes1.append(line)
+		elif counter < (linesPerProcess*2):
+			line = line.rstrip()
+			hashes2.append(line)
+		elif counter < (linesPerProcess*3):
+			line = line.rstrip()
+			hashes3.append(line)
+		elif counter < (linesPerProcess*4):
+			line = line.rstrip()
+			hashes4.append(line)
+		counter = counter + 1
+
+	proc1 = Process(target=start_cracking, args=(hashes1, hashType, q))
+	proc2 = Process(target=start_cracking, args=(hashes2, hashType, q)) 
+	proc3 = Process(target=start_cracking, args=(hashes3, hashType, q))
+	proc4 = Process(target=start_cracking, args=(hashes4, hashType, q))
+
+	current_procs = [proc1, proc2, proc3, proc4]
+
+	# Start all processes
+	for p in current_procs:
+		p.start()
+
+	# Gather all the results from processes
+	results = []
+	for i in range(NUM_PROCESSES):
+		results.extend(q.get())
+
+	# Wait for all worker processes to finish
+	for p in current_procs:
+		p.join()
+
+
+	# depending on user's preference, either dump found hashes
+	# out to terminal window or write to the specified output file
+	# Check for output file
+	usingOutputFile = True
+	if outputfile == '':
+		usingOutputFile = False
+	else: 
+		usingOutputFile = True
+
+	if usingOutputFile == False: # print to the terminal window
+		if len(results) > 0:
+			print "Found:"
+			for fh in results:
+				print fh
+			print ""
+		else: 
+			print "No hashes found."
+
+	else:						# print to the specified output file
+		if len(results) > 0:
+			outf = open(outputfile, 'w')
+			for fh in results:
+				outf.write(fh + "\n")
+			print "Wrote found hashes out to file: " + outf.name
+			print ""
+			outf.close()
+		else :
+			print "No hashes found."
+
+
+
+	# Print stats from run to terminal window
+	counter2 = 0
+	for fHash in results:
+		counter2 = counter2 + 1
+
+	print "Recovered " + str(counter2) + " hashes"
+	
+	# 3600 seconds = 1 hour
+	runTime = time.time() - start_time 
+	print "Runtime: " + str(runTime) + " seconds"
+	# print time.time() - start_time, "seconds"
 
 
 if __name__ == "__main__":
