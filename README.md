@@ -3,7 +3,7 @@ HashCrasher
 
 #### Python-Flavored Password Recovery
 
-A Python tool to recover a variety of hashes. As of 0.0.1 limited to numerical passwords of 1-6 characters using a keyspace of 0-9. HashCrasher does not _YET_ support hashes with salt.
+A Python tool to recover a variety of hashes via brute-force. As of 0.0.2 limited to numerical passwords of 1-6 characters using a keyspace of 0-9. HashCrasher does not _YET_ support hashes with salt.
 
 The following hash types are currently supported:
 
